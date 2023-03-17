@@ -148,8 +148,10 @@
 		  const { competitors, status } = competitions[0];
 		  const homeScore = competitors[0].score;
 		  const awayScore = competitors[1].score;
-		  const winLastDigit = parseInt(homeScore.toString().slice(-1));
-		  const loseLastDigit = parseInt(awayScore.toString().slice(-1));
+		  const winScore = Math.max(homeScore, awayScore);
+		  const loseScore = Math.min(homeScore, awayScore);
+		  const winLastDigit = parseInt(winScore.toString().slice(-1));
+		  const loseLastDigit = parseInt(loseScore.toString().slice(-1));
 		  const period = status.period;
 		  if (!isNaN(winLastDigit) && !isNaN(loseLastDigit) && period !== 0) {
 			tableData[loseLastDigit][winLastDigit]++;
