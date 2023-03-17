@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>March Madness Live Results</title>
+  <style>
+	/* Matrix styles */
+	#table-container {
+	  display: flex;
+	  justify-content: center;
+	  margin-top: 20px;
+	}
+
+	table {
+	  border-collapse: collapse;
+	  width: 80%;
+	  max-width: 800px;
+	}
+
+	th,
+	td {
+	  border: 1px solid #ddd;
+	  padding: 8px;
+	  text-align: center;
+	  font-weight: bold;
+	}
+
+	th {
+	  background-color: #f2f2f2;
+	}
+
+	#sidebar {
+	  display: flex;
+	  flex-wrap: wrap;
+	  justify-content: flex-start;
+	  align-items: flex-start;
+	  margin-top: 20px;
+	}
+
+	.game-box {
+	  display: flex;
+	  flex-direction: column;
+	  justify-content: center;
+	  align-items: center;
+	  width: 200px;
+	  height: 100px;
+	  background-color: #f5f5f5;
+	  border: 1px solid #ddd;
+	  margin-right: 10px;
+	  margin-bottom: 10px;
+	  font-size: 14px;
+	  font-weight: bold;
+	  color: #333;
+	}
+
+	.game-box p {
+	  margin: 0;
+	  padding: 0;
+	}
+
+	.game-box .team {
+	  font-size: 16px;
+	  margin-bottom: 5px;
+	}
+
+	.game-box .score {
+	  font-size: 24px;
+	  margin-bottom: 5px;
+	}
+
+	.game-box .period-time {
+	  display: flex;
+	  justify-content: space-between;
+	  width: 100%;
+	}
+
+	.game-box .period {
+	  font-size: 12px;
+	}
+
+	.game-box .time-remaining {
+	  font-size: 12px;
+	  color: #666;
+	}
+
+	.score-box {
+	  display: inline-flex;
+	  flex-direction: column;
+	  justify-content: center;
+	  align-items: center;
+	  width: 75px;
+	  height: 70px;
+	  background-color: #f5f5f5;
+	  border: 1px solid #ddd;
+	  margin-right: 10px;
+	  font-size: 14px;
+	  font-weight: bold;
+	  color: #333;
+	}
+
+	.score-box p {
+	  margin: 0;
+	  padding: 0;
+	}
+
+	.score-box .team {
+	  font-size: 12px;
+	  margin-bottom: 5px;
+	}
+
+	.score-box .score {
+	  font-size: 24px;
+	  margin-bottom: 5px;
+	}
+
+	.score-box .time {
+	  font-size: 12px;
+	  color: #666;
+	}
+
+  </style>
+</head>
+<body>
+  <h1>March Madness Live Results</h1>
+
+  <!-- Table container -->
+  <div id="table-container"></div>
+
+  <!-- Sidebar container -->
+  <div id="sidebar"></div>
+
+  <script>
+    const tableContainer = document.getElementById('table-container');
+    const sidebar = document.getElementById('sidebar');
+	function updateResults() {
+	  fetch('http://site.api.espn.com/apis/site/v2/sports/basketball/mens-college-basketball/scoreboard')
+		.then(response => response.json())
+		.then(data => {
+		  // Clear previous results
+		  tableContainer.innerHTML = '';
+
+		  // Initialize table data
+		  const tableData = Array.from({ length: 10 }, () => Array.from({ length: 10 }, () => 0));
+
+		// Populate table data
+		data.events.forEach(event => {
+		  const { competitions } = event;
+		  const { competitors, status } = competitions[0];
+		  const homeScore = competitors[0].score;
+		  const awayScore = competitors[1].score;
+		  const winLastDigit = parseInt(homeScore.toString().slice(-1));
+		  const loseLastDigit = parseInt(awayScore.toString().slice(-1));
+		  const period = status.period;
+		  if (!isNaN(winLastDigit) && !isNaN(loseLastDigit) && period !== 0) {
+			tableData[loseLastDigit][winLastDigit]++;
+		  }
+		});
+
+		  // Create table
+		  const table = document.createElement('table');
+
+		  // Create table headers
+		  const headerRow = table.insertRow(-1);
+		  headerRow.insertCell(-1);
+		  for (let i = 0; i < 10; i++) {
+			const headerCell = headerRow.insertCell(-1);
+			headerCell.innerText = i;
+		  }
+
+		  // Create table rows
+		  for (let i = 0; i < 10; i++) {
+			const row = table.insertRow(-1);
+			const rowHeaderCell = row.insertCell(-1);
+			rowHeaderCell.innerText = i;
+			for (let j = 0; j < 10; j++) {
+			  const cell = row.insertCell(-1);
+			  cell.innerText = tableData[i][j];
+			}
+		  }
+
+		  // Add table to container
+		  tableContainer.appendChild(table);
+
+		// Update sidebar
+		sidebar.innerHTML = '';
+		data.events.forEach(event => {
+		  const { shortName, competitions } = event;
+		  const { competitors, status } = competitions[0];
+		  const homeTeamName = competitors[0].team.shortDisplayName;
+		  const awayTeamName = competitors[1].team.shortDisplayName;
+		  const homeTeamSeed = competitors[0].curatedRank.current;
+		  const awayTeamSeed = competitors[1].curatedRank.current;
+		  const homeScore = competitors[0].score;
+		  const awayScore = competitors[1].score;
+		  const period = status.period;
+		  const timeRemaining = status.displayClock ? status.displayClock : '';
+		  if (period === 0) {
+			return;
+		  }
+		  const gameBox = document.createElement('div');
+		  gameBox.classList.add('game-box');
+		  gameBox.innerHTML = `
+			<p class="team">${awayTeamName} (${awayTeamSeed}) @ ${homeTeamName} (${homeTeamSeed})</p>
+			<p class="score">${awayScore} - ${homeScore}</p>
+			<div class="period-time">
+			  <p class="period">Period ${period}</p>
+			  <p class="time-remaining">${timeRemaining}</p>
+			</div>
+		  `;
+		  sidebar.appendChild(gameBox);
+		});
+
+
+
+		})
+		.catch(error => console.error(error));
+	}
+
+
+    // Update results every 30 seconds
+    updateResults();
+    setInterval(updateResults, 300);
+  </script>
+</body>
+</html>
