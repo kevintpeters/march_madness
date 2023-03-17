@@ -179,6 +179,10 @@
 			  cell.innerText = tableData[i][j];
 			}
 		  }
+		
+		  // Add labels to the header cells
+			headerRow.cells[0].innerText = 'Winning Digit';
+			table.rows[0].cells[0].innerText = 'Losing Digit';
 
 		  // Add table to container
 		  tableContainer.appendChild(table);
